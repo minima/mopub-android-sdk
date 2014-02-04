@@ -17,3 +17,5 @@ mopub-sdk/mopub-sdk.iml
 mopub-sample/mopub-sample.iml
 robotium-sample/robotium-sample.iml
 
+# gradle
+build/
