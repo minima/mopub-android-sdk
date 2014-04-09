@@ -32,14 +32,19 @@
 
 package com.mopub.mobileads;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Handler;
 import android.webkit.JavascriptInterface;
 
 import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
+import static com.mopub.mobileads.util.VersionCode.HONEYCOMB;
+import static com.mopub.mobileads.util.VersionCode.currentApiLevel;
 
 public class HtmlInterstitialWebView extends BaseHtmlWebView {
     private Handler mHandler;
+
+    protected static final String MOPUB_JS_INTERFACE_NAME = "mopubUriInterface";
 
     interface MoPubUriJavascriptFireFinishLoadListener {
         abstract void onInterstitialLoaded();
@@ -61,7 +66,9 @@ public class HtmlInterstitialWebView extends BaseHtmlWebView {
         addMoPubUriJavascriptInterface(new MoPubUriJavascriptFireFinishLoadListener() {
             @Override
             public void onInterstitialLoaded() {
-                customEventInterstitialListener.onInterstitialLoaded();
+                if (!mIsDestroyed) {
+                    customEventInterstitialListener.onInterstitialLoaded();
+                }
             }
         });
     }
@@ -92,11 +99,22 @@ public class HtmlInterstitialWebView extends BaseHtmlWebView {
                         moPubUriJavascriptFireFinishLoadListener.onInterstitialLoaded();
                     }
                 });
+
                 return true;
             }
         }
 
-        addJavascriptInterface(new MoPubUriJavascriptInterface(), "mopubUriInterface");
+        addJavascriptInterface(new MoPubUriJavascriptInterface(), MOPUB_JS_INTERFACE_NAME);
+    }
+
+    @TargetApi(11)
+    @Override
+    public void destroy() {
+        if (currentApiLevel().isAtLeast(HONEYCOMB)) {
+            removeJavascriptInterface(MOPUB_JS_INTERFACE_NAME);
+        }
+
+        super.destroy();
     }
 
     static class HtmlInterstitialWebViewListener implements HtmlWebViewListener {

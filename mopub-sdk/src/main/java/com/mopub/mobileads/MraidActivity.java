@@ -32,6 +32,7 @@
 
 package com.mopub.mobileads;
 
+import android.annotation.TargetApi;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -52,6 +53,10 @@ import static com.mopub.mobileads.AdFetcher.AD_CONFIGURATION_KEY;
 import static com.mopub.mobileads.AdFetcher.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
 import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
+import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_CLICK;
+import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
+import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
+import static com.mopub.mobileads.EventForwardingBroadcastReceiver.broadcastAction;
 import static com.mopub.mobileads.util.VersionCode.ICE_CREAM_SANDWICH;
 import static com.mopub.mobileads.util.VersionCode.currentApiLevel;
 
@@ -75,6 +80,10 @@ public class MraidActivity extends BaseInterstitialActivity {
 
             @Override
             public void onExpand(MraidView view) {
+            }
+
+            @Override
+            public void onOpen(MraidView view) {
             }
 
             @Override
@@ -121,6 +130,12 @@ public class MraidActivity extends BaseInterstitialActivity {
                 mMraidView.loadUrl(WEB_VIEW_DID_APPEAR.getUrl());
                 showInterstitialCloseButton();
             }
+
+            @Override
+            public void onOpen(MraidView view) {
+                broadcastAction(MraidActivity.this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_CLICK);
+            }
+
             public void onClose(MraidView view, ViewState newViewState) {
                 mMraidView.loadUrl(WEB_VIEW_DID_CLOSE.getUrl());
                 finish();
@@ -143,10 +158,11 @@ public class MraidActivity extends BaseInterstitialActivity {
         return mMraidView;
     }
 
+    @TargetApi(11)
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        broadcastInterstitialAction(ACTION_INTERSTITIAL_SHOW);
+        broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_SHOW);
 
         if (currentApiLevel().isAtLeast(ICE_CREAM_SANDWICH)) {
             getWindow().setFlags(
@@ -170,7 +186,7 @@ public class MraidActivity extends BaseInterstitialActivity {
     @Override
     protected void onDestroy() {
         mMraidView.destroy();
-        broadcastInterstitialAction(ACTION_INTERSTITIAL_DISMISS);
+        broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_DISMISS);
         super.onDestroy();
     }
 }
